@@ -8,7 +8,7 @@ const checkbox = document.querySelector("#checkbox");
 const todoInput = document.querySelector("#todo-input");
 const addTodoBtn = document.querySelector("#btn3");
 
-let todos = []
+let todos = [];
 
 searchBtn.addEventListener("click", () => {
   searchInput.classList.remove("hidden");
@@ -23,39 +23,58 @@ closeSearchBtn.addEventListener("click", () => {
 addTodoBtn.addEventListener("click", postTodo);
 
 function renderTodo(todo) {
-    const todoDiv = document.createElement("div");
-    todoDiv.classList.add(
-      "flex",
-      "items-center",
-      "justify-between",
-      "bg-cyan-800",
-      "p-3",
-      "rounded"
-    );
+  const todoDiv = document.createElement("div");
+  todoDiv.classList.add(
+    "flex",
+    "items-center",
+    "justify-between",
+    "bg-cyan-800",
+    "p-3",
+    "rounded"
+  );
 
-    let todoText = document.createElement("h3");
-    todoText.classList.add("text-xl", "text-slate-300");
-    let isCompletedInput = document.createElement("input");
-    isCompletedInput.setAttribute("type", "checkbox");
+  let todoText = document.createElement("h3");
+  todoText.classList.add("text-xl", "text-slate-300");
+  let isCompletedInput = document.createElement("input");
+  isCompletedInput.setAttribute("type", "checkbox");
 
-    todoText.textContent = todo.todo_title;
-    isCompletedInput.checked = todo.is_completed;
-    todoDiv.append(todoText, isCompletedInput);
-    todoContainer.append(todoDiv);
+  const deleteBtn = document.createElement("p");
+  deleteBtn.classList.add(
+    "text-sm",
+    "text-red-500",
+    "cursor-pointer",
+    "hover:text-red-600",
+    "duration-1"
+  );
+  deleteBtn.textContent = "Delete";
+
+  // Attach click event to the delete button
+  deleteBtn.addEventListener("click", () => {
+    deleteTodo(todo.id); 
+    todoDiv.remove(); 
+  });
+
+  todoText.textContent = todo.todo_title;
+  isCompletedInput.checked = todo.is_completed;
+
+  if (isCompletedInput.checked === true) {
+    todoText.classList.add("line-through");
+  }
+
+  todoDiv.append(todoText, isCompletedInput, deleteBtn);
+  todoContainer.append(todoDiv);
 }
 
 function getTodos() {
   fetch("http://127.0.0.1:8000/todos")
     .then((response) => response.json())
     .then((data) => {
-      todos = [...data]
+      todos = [...data];
       todos.forEach((todo) => {
-        renderTodo(todo)
-      })
+        renderTodo(todo);
+      });
     })
     .catch((err) => console.log(err));
-  
-  
 }
 
 function postTodo() {
@@ -70,14 +89,28 @@ function postTodo() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(todo),
-  }).then((response) => response.json())
-    .then((data) =>{
+  })
+    .then((response) => response.json())
+    .then((data) => {
       console.log(data);
-      //todos.push(data)
-      renderTodos(data);
+      renderTodo(data);
     })
     .catch((err) => console.log(err));
+}
 
+function deleteTodo(id) {
+  fetch(`http://127.0.0.1:8000/delete-todo/${id}`, {
+    method: "DELETE",
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`Failed to delete todo with ID ${id}`);
+      }
+      console.log(`Todo with ID ${id} deleted successfully`);
+    })
+    .catch((error) => {
+      console.error("Error deleting todo:", error.message);
+    });
 }
 
 getTodos();
